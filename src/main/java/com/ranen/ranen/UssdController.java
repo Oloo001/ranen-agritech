@@ -1,0 +1,124 @@
+package com.ranen.ranen;
+
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+
+@RestController
+public class UssdController {
+
+    private static final ZoneId NAIROBI = ZoneId.of("Africa/Nairobi");
+
+    private final PlotStore plotStore;
+    private final CalendarService calendarService;
+
+    public UssdController(PlotStore plotStore, CalendarService calendarService) {
+        this.plotStore = plotStore;
+        this.calendarService = calendarService;
+    }
+
+    private static String fit(String reply) {
+        return reply.length() <= 180 ? reply : reply.substring(0, 177) + "...";
+    }
+
+    @PostMapping(value = "/ussd", produces = "text/plain")
+    public String handle(@RequestParam(defaultValue = "") String phoneNumber,
+                         @RequestParam(defaultValue = "") String text) {
+
+        // "1*2*1" becomes ["1", "2", "1"]; empty text becomes an empty array
+        String[] steps = text.isEmpty() ? new String[0] : text.split("\\*");
+
+        if (steps.length == 0) {
+            return "CON Habari " + phoneNumber + "!\nRanen AgriTech\n"
+                    + "1. Register new plot\n2. My crop calendar\n3. Find agrovets";
+        }
+
+        String reply = switch (steps[0]) {
+            case "1" -> registerPlot(phoneNumber, steps);
+            case "2" -> showCalendar(phoneNumber, steps);
+            case "3" -> "END Agrovet directory coming soon.";
+            default -> "END Invalid choice.";
+        };
+
+        System.out.println("USSD reply length: " + reply.length());
+        return fit(reply);
+    }
+
+    private String registerPlot(String phone, String[] steps) {
+        // steps[0] = "1" (register), steps[1] = crop, steps[2] = when planted
+        if (steps.length == 1) {
+            return "CON Which crop?\n1. Cassava\n2. Sweet potato";
+        }
+        if (!steps[1].equals("1") && !steps[1].equals("2")) {
+            return "END Invalid choice.";
+        }
+        if (steps.length == 2) {
+            return "CON When did you plant?\n1. Today\n2. About 1 week ago\n3. About 2 weeks ago";
+        }
+
+        int daysAgo = switch (steps[2]) {
+            case "1" -> 0;
+            case "2" -> 7;
+            case "3" -> 14;
+            default -> -1;
+        };
+        if (daysAgo < 0) {
+            return "END Invalid choice.";
+        }
+
+        String crop = steps[1].equals("1") ? "Cassava" : "Sweet potato";
+        LocalDate planted = LocalDate.now(NAIROBI).minusDays(daysAgo);
+        plotStore.addPlot(phone, new CropPlot(crop, planted));
+
+        return "END " + crop + " plot registered. You will get SMS advice.";
+    }
+
+    private String showCalendar(String phone, String[] steps) {
+        List<CropPlot> plots = plotStore.getPlots(phone);
+        if (plots.isEmpty()) {
+            return "END You have no plots yet. Dial again and choose 1.";
+        }
+        if (plots.size() == 1) {
+            return plotDetails(plots.get(0));
+        }
+
+        // Several plots: first ask which one
+        if (steps.length == 1) {
+            StringBuilder sb = new StringBuilder("CON Which plot?\n");
+            for (int i = 0; i < plots.size(); i++) {
+                sb.append(i + 1).append(". ").append(plots.get(i).crop()).append("\n");
+            }
+            return sb.toString();
+        }
+
+        // steps[1] is the number they picked
+        int choice;
+        try {
+            choice = Integer.parseInt(steps[1]);
+        } catch (NumberFormatException e) {
+            return "END Invalid choice.";
+        }
+        if (choice < 1 || choice > plots.size()) {
+            return "END Invalid choice.";
+        }
+        return plotDetails(plots.get(choice - 1));
+    }
+
+    private String plotDetails(CropPlot plot) {
+        long dap = ChronoUnit.DAYS.between(plot.plantedDate(), LocalDate.now(NAIROBI));
+
+        String current = calendarService.currentMilestone(plot.crop(), dap)
+                .map(m -> "Task: " + m.name() + "\n" + m.advice())
+                .orElse("No task right now.");
+        String next = calendarService.nextMilestone(plot.crop(), dap)
+                .map(m -> "\nNext: " + m.name() + " in " + (m.dapStart() - dap) + " days")
+                .orElse("");
+
+        return "END " + plot.crop() + " (day " + dap + ")\n" + current + next;
+    }
+}
