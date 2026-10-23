@@ -8,7 +8,8 @@ import org.springframework.stereotype.Service;
 public class ConsoleSmsSender implements SmsSender {
 
     @Override
-    public void send(String phone, String message) {
+    public String send(String phone, String message) {
         System.out.println("[FAKE SMS] to " + phone + ": " + message);
+        return "console";
     }
 }

@@ -18,4 +18,9 @@ public class AdminController {
     public String runAdvice() {
         return "Sent " + adviceJob.run() + " message(s)";
     }
+
+    @GetMapping("/admin/recover-stale")
+    public String recoverStale() {
+        return "Requeued " + adviceJob.recoverStale() + " message(s)";
+    }
 }

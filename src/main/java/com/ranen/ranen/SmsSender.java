@@ -1,5 +1,6 @@
 package com.ranen.ranen;
 
 public interface SmsSender {
-    void send(String phone, String message);
+    /** Sends the message and returns the provider's reference (maybe null). */
+    String send(String phone, String message);
 }

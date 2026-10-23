@@ -36,16 +36,40 @@ public class AdviceRepository {
                 .list();
     }
 
-    // Try to record "this was sent". Returns true only for the caller that wins.
+    // Try to record "I am sending this". Returns true only for the caller that wins.
     public boolean claim(int plotId, int templateId) {
         int rows = jdbc.sql("""
-                INSERT INTO sms_log (plot_id, template_id) VALUES (:plot, :template)
+                INSERT INTO sms_log (plot_id, template_id, status)
+                VALUES (:plot, :template, 'pending')
                 ON CONFLICT (plot_id, template_id) DO NOTHING
                 """)
                 .param("plot", plotId)
                 .param("template", templateId)
                 .update();
         return rows == 1;
+    }
+
+    // Confirm the send and keep the provider's receipt.
+    public void markSent(int plotId, int templateId, String providerRef) {
+        jdbc.sql("""
+                UPDATE sms_log SET status = 'sent', provider_ref = :ref
+                WHERE plot_id = :plot AND template_id = :template
+                """)
+                .param("ref", providerRef)
+                .param("plot", plotId)
+                .param("template", templateId)
+                .update();
+    }
+
+    // Crash recovery: forget claims that have been 'pending' too long so they can be retried.
+    public int requeueStale(int olderThanMinutes) {
+        return jdbc.sql("""
+                DELETE FROM sms_log
+                WHERE status = 'pending'
+                  AND sent_at < now() - (:minutes * interval '1 minute')
+                """)
+                .param("minutes", olderThanMinutes)
+                .update();
     }
 
     // Undo a claim if sending failed, so tomorrow's run can retry.

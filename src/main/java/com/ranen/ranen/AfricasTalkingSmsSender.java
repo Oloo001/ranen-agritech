@@ -17,6 +17,7 @@ import java.util.regex.Pattern;
 public class AfricasTalkingSmsSender implements SmsSender {
 
     private static final Pattern SUCCESS = Pattern.compile("\"status\"\\s*:\\s*\"Success\"");
+    private static final Pattern MESSAGE_ID = Pattern.compile("\"messageId\"\\s*:\\s*\"([^\"]+)\"");
 
     private final RestClient client;
     private final String username;
@@ -38,7 +39,7 @@ public class AfricasTalkingSmsSender implements SmsSender {
     }
 
     @Override
-    public void send(String phone, String message) {
+    public String send(String phone, String message) {
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
         form.add("username", username);
         form.add("to", phone);
@@ -57,5 +58,8 @@ public class AfricasTalkingSmsSender implements SmsSender {
             throw new IllegalStateException("SMS not accepted: " + body);
         }
         System.out.println("[AT SANDBOX] " + body);
+
+        var m = MESSAGE_ID.matcher(body);
+        return m.find() ? m.group(1) : null;
     }
 }
