@@ -16,10 +16,13 @@ public class UssdController {
 
     private final PlotStore plotStore;
     private final CalendarService calendarService;
+    private final FarmerRepository farmerRepository;
 
-    public UssdController(PlotStore plotStore, CalendarService calendarService) {
+    public UssdController(PlotStore plotStore, CalendarService calendarService,
+                          FarmerRepository farmerRepository) {
         this.plotStore = plotStore;
         this.calendarService = calendarService;
+        this.farmerRepository = farmerRepository;
     }
 
     private static String fit(String reply) {
@@ -74,6 +77,7 @@ public class UssdController {
         String crop = steps[1].equals("1") ? "Cassava" : "Sweet potato";
         LocalDate planted = LocalDate.now(NAIROBI).minusDays(daysAgo);
         plotStore.addPlot(phone, new CropPlot(crop, planted));
+        farmerRepository.registerConsent(phone);
 
         return "END " + crop + " plot registered. You will get SMS advice.";
     }
