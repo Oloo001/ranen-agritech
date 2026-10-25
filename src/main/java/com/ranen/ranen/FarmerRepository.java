@@ -34,4 +34,14 @@ public class FarmerRepository {
                 .param("phone", phone)
                 .update();
     }
+
+    public void setLanguage(String phone, String language) {
+        jdbc.sql("""
+                INSERT INTO farmers (phone_number, language) VALUES (:phone, :lang)
+                ON CONFLICT (phone_number) DO UPDATE SET language = :lang
+                """)
+                .param("phone", phone)
+                .param("lang", language)
+                .update();
+    }
 }

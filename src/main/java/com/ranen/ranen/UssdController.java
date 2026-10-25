@@ -38,13 +38,14 @@ public class UssdController {
 
         if (steps.length == 0) {
             return "CON Habari " + phoneNumber + "!\nRanen AgriTech\n"
-                    + "1. Register new plot\n2. My crop calendar\n3. Find agrovets";
+                    + "1. Register new plot\n2. My crop calendar\n3. Find agrovets\n4. Language/Lugha";
         }
 
         String reply = switch (steps[0]) {
             case "1" -> registerPlot(phoneNumber, steps);
             case "2" -> showCalendar(phoneNumber, steps);
             case "3" -> "END Agrovet directory coming soon.";
+            case "4" -> chooseLanguage(phoneNumber, steps);
             default -> "END Invalid choice.";
         };
 
@@ -111,6 +112,23 @@ public class UssdController {
             return "END Invalid choice.";
         }
         return plotDetails(plots.get(choice - 1));
+    }
+
+    private String chooseLanguage(String phone, String[] steps) {
+        if (steps.length == 1) {
+            return "CON Choose language / Chagua lugha\n1. English\n2. Kiswahili\n3. Dholuo";
+        }
+        String lang = switch (steps[1]) {
+            case "1" -> "en";
+            case "2" -> "sw";
+            case "3" -> "luo";
+            default -> null;
+        };
+        if (lang == null) {
+            return "END Invalid choice.";
+        }
+        farmerRepository.setLanguage(phone, lang);
+        return "END Saved. / Imehifadhiwa.";
     }
 
     private String plotDetails(CropPlot plot) {
