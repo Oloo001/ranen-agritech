@@ -1,4 +1,4 @@
-package com.ranen.ranen;
+package com.ranen.ranen.identity;
 
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;

@@ -1,4 +1,4 @@
-package com.ranen.ranen;
+package com.ranen.ranen.notifications;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,7 +49,8 @@ class AdviceJobConcurrencyTest {
         }
     }
 
-    @Autowired AdviceJob job;
+    @Autowired
+    AdviceJob job;
     @Autowired JdbcClient jdbc;
     @Autowired CountingSmsSender sender;
 

@@ -1,4 +1,4 @@
-package com.ranen.ranen;
+package com.ranen.ranen.calendar;
 
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.JdbcClient;

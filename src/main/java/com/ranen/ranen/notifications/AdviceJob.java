@@ -1,4 +1,4 @@
-package com.ranen.ranen;
+package com.ranen.ranen.notifications;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

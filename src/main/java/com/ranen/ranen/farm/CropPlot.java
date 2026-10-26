@@ -1,4 +1,4 @@
-package com.ranen.ranen;
+package com.ranen.ranen.farm;
 
 import java.time.LocalDate;
 

@@ -1,4 +1,4 @@
-package com.ranen.ranen;
+package com.ranen.ranen.notifications;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

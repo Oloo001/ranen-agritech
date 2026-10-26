@@ -1,5 +1,6 @@
-package com.ranen.ranen;
+package com.ranen.ranen.channels;
 
+import com.ranen.ranen.notifications.AdviceJob;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;

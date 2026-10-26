@@ -1,4 +1,4 @@
-package com.ranen.ranen;
+package com.ranen.ranen.notifications;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;

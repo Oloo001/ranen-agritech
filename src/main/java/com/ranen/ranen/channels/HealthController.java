@@ -1,4 +1,4 @@
-package com.ranen.ranen;
+package com.ranen.ranen.channels;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
