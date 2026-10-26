@@ -17,29 +17,30 @@ public class AdviceRepository {
     // Plots whose milestone window is open today and haven't been messaged yet.
     public List<DueAdvice> findDue() {
         return jdbc.sql("""
-                        SELECT p.plot_id, t.template_id, p.phone_number, p.crop, t.milestone,
-                               COALESCE(tr.advice, t.advice) AS advice
-                        FROM crop_plots p
-                        JOIN calendar_templates t ON t.crop = p.crop
-                        LEFT JOIN farmers f ON f.phone_number = p.phone_number
-                        LEFT JOIN advice_translations tr
-                               ON tr.template_id = t.template_id
-                              AND tr.language = COALESCE(f.language, 'en')
-                              AND tr.reviewed = TRUE
-                        WHERE ((now() AT TIME ZONE 'Africa/Nairobi')::date - p.planted_date)
-                                  BETWEEN t.dap_start AND t.dap_end
-                          AND COALESCE(f.sms_opt_out, FALSE) = FALSE
-                          AND NOT EXISTS (
-                              SELECT 1 FROM sms_log s
-                              WHERE s.plot_id = p.plot_id AND s.template_id = t.template_id)
-             """)
+                SELECT p.plot_id, t.template_id, p.phone_number,
+                       COALESCE(loc.message, en.message,
+                                'Hello, ' || t.crop || ' - ' || t.milestone || ': ' || t.advice) AS message
+                FROM crop_plots p
+                JOIN calendar_templates t ON t.crop = p.crop
+                LEFT JOIN farmers f ON f.phone_number = p.phone_number
+                LEFT JOIN advice_messages loc
+                       ON loc.template_id = t.template_id
+                      AND loc.language = COALESCE(f.language, 'en')
+                      AND loc.reviewed = TRUE
+                LEFT JOIN advice_messages en
+                       ON en.template_id = t.template_id AND en.language = 'en'
+                WHERE ((now() AT TIME ZONE 'Africa/Nairobi')::date - p.planted_date)
+                          BETWEEN t.dap_start AND t.dap_end
+                  AND COALESCE(f.sms_opt_out, FALSE) = FALSE
+                  AND NOT EXISTS (
+                      SELECT 1 FROM sms_log s
+                      WHERE s.plot_id = p.plot_id AND s.template_id = t.template_id)
+                """)
                 .query((rs, rowNum) -> new DueAdvice(
                         rs.getInt("plot_id"),
                         rs.getInt("template_id"),
                         rs.getString("phone_number"),
-                        rs.getString("crop"),
-                        rs.getString("milestone"),
-                        rs.getString("advice")))
+                        rs.getString("message")))
                 .list();
     }
 

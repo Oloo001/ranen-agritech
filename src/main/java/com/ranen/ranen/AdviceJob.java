@@ -33,11 +33,9 @@ public class AdviceJob {
 
             String ref;
             try {
-                String message = "Habari, " + advice.crop() + " - " + advice.milestone()
-                        + ": " + advice.advice();
-                ref = smsSender.send(advice.phone(), message);
+                ref = smsSender.send(advice.phone(), advice.message());
             } catch (Exception e) {
-                // The send failed, so nothing reached the farmer: safe to retry.
+                //The send failed, so nothing reached the farmer: safe to retry.
                 log.error("Failed to send advice for plot {}", advice.plotId(), e);
                 repository.release(advice.plotId(), advice.templateId());
                 continue;
