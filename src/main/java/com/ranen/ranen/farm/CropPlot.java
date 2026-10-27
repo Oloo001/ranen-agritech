@@ -2,5 +2,5 @@ package com.ranen.ranen.farm;
 
 import java.time.LocalDate;
 
-public record CropPlot(String crop, LocalDate plantedDate) {
+public record CropPlot(int plotId, String crop, LocalDate plantedDate) {
 }

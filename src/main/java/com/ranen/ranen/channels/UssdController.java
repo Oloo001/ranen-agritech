@@ -42,7 +42,8 @@ public class UssdController {
 
         if (steps.length == 0) {
             return "CON Habari " + phoneNumber + "!\nRanen AgriTech\n"
-                    + "1. Register new plot\n2. My crop calendar\n3. Find agrovets\n4. Language/Lugha";
+                    + "1. Register new plot\n2. My crop calendar\n3. Find agrovets\n4. Language/Lugha"
+                    + "\n5. Log harvest";
         }
 
         String reply = switch (steps[0]) {
@@ -50,6 +51,7 @@ public class UssdController {
             case "2" -> showCalendar(phoneNumber, steps);
             case "3" -> "END Agrovet directory coming soon.";
             case "4" -> chooseLanguage(phoneNumber, steps);
+            case "5" -> logHarvest(phoneNumber, steps);
             default -> "END Invalid choice.";
         };
 
@@ -81,7 +83,7 @@ public class UssdController {
 
         String crop = steps[1].equals("1") ? "Cassava" : "Sweet potato";
         LocalDate planted = LocalDate.now(NAIROBI).minusDays(daysAgo);
-        plotStore.addPlot(phone, new CropPlot(crop, planted));
+        plotStore.addPlot(phone, crop, planted);
         farmerRepository.registerConsent(phone);
 
         return "END " + crop + " plot registered. You will get SMS advice.";
@@ -146,5 +148,46 @@ public class UssdController {
                 .orElse("");
 
         return "END " + plot.crop() + " (day " + dap + ")\n" + current + next;
+    }
+
+    private String logHarvest(String phone, String[] steps) {
+        List<CropPlot> plots = plotStore.getPlots(phone);
+        if (plots.isEmpty()) {
+            return "END You have no active plots.";
+        }
+        if (steps.length == 1) {
+            StringBuilder sb = new StringBuilder("CON Which plot did you harvest?\n");
+            for (int i = 0; i < plots.size(); i++) {
+                sb.append(i + 1).append(". ").append(plots.get(i).crop()).append("\n");
+            }
+            return sb.toString();
+        }
+
+        int choice;
+        try {
+            choice = Integer.parseInt(steps[1]);
+        } catch (NumberFormatException e) {
+            return "END Invalid choice.";
+        }
+        if (choice < 1 || choice > plots.size()) {
+            return "END Invalid choice.";
+        }
+        if (steps.length == 2) {
+            return "CON Enter harvest in kg (numbers only):";
+        }
+
+        int kg;
+        try {
+            kg = Integer.parseInt(steps[2].trim());
+        } catch (NumberFormatException e) {
+            return "END Invalid amount.";
+        }
+        if (kg < 1 || kg > 100000) {
+            return "END Invalid amount.";
+        }
+
+        boolean ok = plotStore.recordHarvest(plots.get(choice - 1).plotId(), phone, kg);
+        return ok ? "END Harvest of " + kg + " kg recorded. Thank you!"
+                : "END Could not record this harvest. Please try again.";
     }
 }

@@ -31,6 +31,7 @@ public class AdviceRepository {
                        ON en.template_id = t.template_id AND en.language = 'en'
                 WHERE ((now() AT TIME ZONE 'Africa/Nairobi')::date - p.planted_date)
                           BETWEEN t.dap_start AND t.dap_end
+                            AND p.status = 'active'
                   AND COALESCE(f.sms_opt_out, FALSE) = FALSE
                   AND NOT EXISTS (
                       SELECT 1 FROM sms_log s
