@@ -186,8 +186,20 @@ public class UssdController {
             return "END Invalid amount.";
         }
 
-        boolean ok = plotStore.recordHarvest(plots.get(choice - 1).plotId(), phone, kg);
-        return ok ? "END Harvest of " + kg + " kg recorded. Thank you!"
-                : "END Could not record this harvest. Please try again.";
+        CropPlot plot = plots.get(choice - 1);
+
+        // Step 3: show what we understood and ask before saving anything.
+        if (steps.length == 3) {
+            return "CON Record " + kg + " kg of " + plot.crop() + "?\n1. Confirm\n2. Cancel";
+        }
+
+        // Step 4: the farmer's answer.
+        return switch (steps[3]) {
+            case "1" -> plotStore.recordHarvest(plot.plotId(), phone, kg)
+                    ? "END Harvest of " + kg + " kg recorded. Thank you!"
+                    : "END Could not record this harvest. Please try again.";
+            case "2" -> "END Cancelled. Nothing was saved.";
+            default -> "END Invalid choice.";
+        };
     }
 }
