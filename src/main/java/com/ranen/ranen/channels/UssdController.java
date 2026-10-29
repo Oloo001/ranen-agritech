@@ -3,6 +3,7 @@ package com.ranen.ranen.channels;
 import com.ranen.ranen.calendar.CalendarService;
 import com.ranen.ranen.farm.CropPlot;
 import com.ranen.ranen.farm.PlotStore;
+import com.ranen.ranen.common.PhoneNumbers;
 import com.ranen.ranen.identity.FarmerRepository;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -34,8 +35,15 @@ public class UssdController {
     }
 
     @PostMapping(value = "/ussd", produces = "text/plain")
-    public String handle(@RequestParam(defaultValue = "") String phoneNumber,
+    public String handle(@RequestParam(name = "phoneNumber", defaultValue = "") String rawPhoneNumber,
                          @RequestParam(defaultValue = "") String text) {
+
+        String phoneNumber = PhoneNumbers.normalize(rawPhoneNumber).orElse(null);
+        if (phoneNumber == null) {
+            return "END Sorry, this service works with Kenyan mobile numbers only.";
+        }
+
+        // ... the rest of the method stays exactly as it is
 
         // "1*2*1" becomes ["1", "2", "1"]; empty text becomes an empty array
         String[] steps = text.isEmpty() ? new String[0] : text.split("\\*");
